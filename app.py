@@ -126,17 +126,17 @@ def main():
         st.markdown("---")
         groq_key = os.getenv("GROQ_API_KEY", "")
         if groq_key and not groq_key.startswith("gsk_your_groq_api_key"):
-            st.markdown("🟢 **LLM Status:** Groq Cloud API (Llama 3.1)")
+            st.markdown("🟢 **LLM Status:** Groq Cloud API (GPT-OSS 20B)")
         else:
             st.markdown("🟡 **LLM Status:** Fallback Engine (No API key)")
-            st.caption("Add `GROQ_API_KEY` in `.env` for Groq Llama 3.1 generation.")
+            st.caption("Add `GROQ_API_KEY` in `.env` for Groq GPT-OSS 20B generation.")
 
     # Header Banner
     st.markdown("""
     <div class="main-header">
         <h1>🎓 SmartCampus RAG Knowledge Assistant</h1>
         <p>Groundable QA Assistant for University Academic Regulations, Exam Rules & Placement Policies</p>
-        <span class="badge-status">RAG Architecture Active (ChromaDB + LlamaIndex + Llama 3.1)</span>
+        <span class="badge-status">RAG Architecture Active (ChromaDB + LlamaIndex + GPT-OSS 20B)</span>
     </div>
     """, unsafe_allow_html=True)
 
