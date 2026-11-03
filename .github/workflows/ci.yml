@@ -16,6 +16,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 jobs:
   # ============================================================
   # STAGE 1: AUTOMATED TESTING & BENCHMARK SUITE
@@ -57,34 +62,37 @@ jobs:
 
       - name: Run Pytest automated test suite
         run: |
-          pytest -v --tb=short -ra > pytest_output.txt 2>&1 || true
+          pytest -v --tb=long -ra > pytest_output.txt 2>&1 || true
           cat pytest_output.txt
 
-      - name: Publish Pytest Log to Step Summary
+      - name: Publish Pytest Log to Commit Comment
         if: always()
         run: |
-          echo "## 🧪 Pytest Execution Results (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat pytest_output.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Pytest Log Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-log-${{ matrix.python-version }}
-          path: pytest_output.txt
+          python3 -c '
+          import os, sys, json, urllib.request
+          output = open("pytest_output.txt").read() if os.path.exists("pytest_output.txt") else "No output file"
+          sha = "${{ github.sha }}"
+          repo = "${{ github.repository }}"
+          token = "${{ secrets.GITHUB_TOKEN }}"
+          body = f"### 🧪 Pytest Execution Log (Python ${{ matrix.python-version }}):\n```\n{output[:60000]}\n```"
+          data = json.dumps({"body": body}).encode("utf-8")
+          url = f"https://api.github.com/repos/{repo}/commits/{sha}/comments"
+          req = urllib.request.Request(url, data=data, headers={
+              "Authorization": f"token {token}",
+              "User-Agent": "GitHub-Actions-Diagnostics",
+              "Content-Type": "application/json"
+          })
+          try:
+              urllib.request.urlopen(req)
+              print("✅ Published pytest diagnostic log to commit comment.")
+          except Exception as e:
+              print(f"Failed to post comment: {e}")
+          '
 
       - name: Verify Pytest Success
         run: |
           if grep -q "=== FAILURES ===" pytest_output.txt || grep -q "=== ERRORS ===" pytest_output.txt; then
             echo "❌ Tests failed in Pytest suite."
-            grep -E "FAILED |ERROR " pytest_output.txt | while read -r line; do
-              echo "::error title=Failed Test::$line"
-            done
-            grep -A 25 "=== FAILURES ===" pytest_output.txt | head -n 25 | while read -r line; do
-              echo "::error title=Failure Detail::$line"
-            done
             exit 1
           fi
           echo "✅ All tests passed successfully."
