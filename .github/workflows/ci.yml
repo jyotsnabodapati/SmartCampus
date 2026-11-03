@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Pytest automated test suite
         run: |
-          pytest -v --tb=long -ra > pytest_output.txt 2>&1 || true
+          pytest -v --tb=short -ra > pytest_output.txt 2>&1 || true
           cat pytest_output.txt
 
       - name: Publish Pytest Log to Step Summary
@@ -79,6 +79,12 @@ jobs:
         run: |
           if grep -q "=== FAILURES ===" pytest_output.txt || grep -q "=== ERRORS ===" pytest_output.txt; then
             echo "❌ Tests failed in Pytest suite."
+            grep -E "FAILED |ERROR " pytest_output.txt | while read -r line; do
+              echo "::error title=Failed Test::$line"
+            done
+            grep -A 25 "=== FAILURES ===" pytest_output.txt | head -n 25 | while read -r line; do
+              echo "::error title=Failure Detail::$line"
+            done
             exit 1
           fi
           echo "✅ All tests passed successfully."
