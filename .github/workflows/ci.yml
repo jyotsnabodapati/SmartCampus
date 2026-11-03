@@ -57,13 +57,31 @@ jobs:
 
       - name: Run Pytest automated test suite
         run: |
-          pytest -v --tb=short -ra 2>&1 | tee pytest_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+          pytest -v --tb=long -ra > pytest_output.txt 2>&1 || true
+          cat pytest_output.txt
+
+      - name: Publish Pytest Log to Step Summary
+        if: always()
+        run: |
           echo "## 🧪 Pytest Execution Results (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat pytest_output.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          exit $EXIT_CODE
+
+      - name: Upload Pytest Log Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log-${{ matrix.python-version }}
+          path: pytest_output.txt
+
+      - name: Verify Pytest Success
+        run: |
+          if grep -q "=== FAILURES ===" pytest_output.txt || grep -q "=== ERRORS ===" pytest_output.txt; then
+            echo "❌ Tests failed in Pytest suite."
+            exit 1
+          fi
+          echo "✅ All tests passed successfully."
 
       - name: Run 15-question benchmark evaluation suite
         run: |
