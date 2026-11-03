@@ -57,7 +57,13 @@ jobs:
 
       - name: Run Pytest automated test suite
         run: |
-          pytest -v --tb=short -ra
+          pytest -v --tb=short -ra 2>&1 | tee pytest_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "## 🧪 Pytest Execution Results (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat pytest_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $EXIT_CODE
 
       - name: Run 15-question benchmark evaluation suite
         run: |
