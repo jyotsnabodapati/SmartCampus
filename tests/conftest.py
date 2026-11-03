@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import warnings
 import pytest
 
 # Ensure project root is in sys.path
@@ -8,10 +9,19 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+# Suppress non-critical third-party warnings and enforce PyTorch backend
+warnings.filterwarnings("ignore")
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TRANSFORMERS_NO_TF"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["USE_TF"] = "0"
+os.environ["USE_TORCH"] = "1"
 os.environ.setdefault("KERAS_HOME", os.path.join(tempfile.gettempdir(), ".keras"))
 
 from llama_index.core import Document
-from llama_index.core.base.embeddings.base import BaseEmbedding
+from llama_index.core.embeddings import BaseEmbedding
 from src.llm import MockLocalLLM
 
 
@@ -20,6 +30,8 @@ class FastMockEmbedding(BaseEmbedding):
     Ultra-fast mock embedding model returning 384-dimensional vectors.
     Allows unit tests to run in milliseconds without downloading models.
     """
+    model_name: str = "FastMockEmbedding"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -87,4 +99,3 @@ def temp_chroma_dir(tmp_path):
     db_dir = tmp_path / "test_chroma_db"
     db_dir.mkdir()
     return str(db_dir)
-

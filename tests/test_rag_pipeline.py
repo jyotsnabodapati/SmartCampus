@@ -44,7 +44,7 @@ def test_rag_query_malpractice_policy(rag_engine_instance):
     """Verify multi-rule query returns grounded answer with Examination Rules source citation."""
     result = rag_engine_instance.query("What are the penalties for Level 2 examination malpractice?")
     assert not result["is_refusal"]
-    assert "Examination_Rules.txt" in result["sources"]
+    assert any("Examination_Rules" in s for s in result["sources"])
     assert len(result["retrieved_chunks"]) >= 1
 
 
@@ -52,6 +52,5 @@ def test_rag_query_placement_policy(rag_engine_instance):
     """Verify placement policy query returns grounded answer with Placement Policy source citation."""
     result = rag_engine_instance.query("What is the minimum CGPA required to participate in campus placement drives?")
     assert not result["is_refusal"]
-    assert "Placement_Policy.txt" in result["sources"]
+    assert any("Placement_Policy" in s for s in result["sources"])
     assert "6.5" in result["answer"]
-

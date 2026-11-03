@@ -133,3 +133,4 @@ To activate Docker Hub publishing and live cloud deployment, configure the follo
 
 > [!NOTE]  
 > If these secrets are not configured, the GitHub Actions pipeline automatically skips the push/deploy steps with an informative notice while continuing to execute and pass all test and build stages.
+

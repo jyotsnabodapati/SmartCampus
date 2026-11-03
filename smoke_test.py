@@ -8,8 +8,19 @@ import os
 import sys
 import time
 import argparse
+import warnings
 import urllib.request
 import urllib.error
+
+# Suppress non-critical third-party warnings and enforce PyTorch backend
+warnings.filterwarnings("ignore")
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TRANSFORMERS_NO_TF"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["USE_TF"] = "0"
+os.environ["USE_TORCH"] = "1"
 
 # Ensure UTF-8 output on Windows
 if hasattr(sys.stdout, 'reconfigure'):
@@ -38,7 +49,7 @@ def check_http_health(url: str = "http://localhost:8501", timeout: int = 15) -> 
                     if body == "ok" or response.status == 200:
                         print(f"  [PASS] Streamlit Server Health Check: HTTP {response.status} at {endpoint}")
                         return True
-        except Exception as e:
+        except Exception:
             continue
 
     print(f"  [WARN] HTTP health endpoint unreachable at {url} (server may be offline or starting)")

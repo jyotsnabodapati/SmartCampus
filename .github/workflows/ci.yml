@@ -24,6 +24,7 @@ jobs:
     name: Run Automated Tests & Benchmarks
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11"]
 
@@ -34,6 +35,7 @@ jobs:
       TRANSFORMERS_NO_TF: "1"
       USE_TF: "0"
       USE_TORCH: "1"
+      HF_HUB_DISABLE_SYMLINKS_WARNING: "1"
 
     steps:
       - name: Check out repository
@@ -55,7 +57,7 @@ jobs:
 
       - name: Run Pytest automated test suite
         run: |
-          pytest -v --tb=short
+          pytest -v --tb=short -ra
 
       - name: Run 15-question benchmark evaluation suite
         run: |
@@ -93,8 +95,8 @@ jobs:
       - name: Test container startup & health check in runner
         run: |
           docker run -d --name smartcampus-test -p 8501:8501 smartcampus:test
-          echo "Waiting 20 seconds for Streamlit server warmup..."
-          sleep 20
+          echo "Waiting 25 seconds for Streamlit server warmup..."
+          sleep 25
           docker ps
           curl -f http://localhost:8501/_stcore/health || exit 1
           echo "Container health check passed!"

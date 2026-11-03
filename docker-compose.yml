@@ -31,3 +31,4 @@ services:
 volumes:
   chroma_data:
     driver: local
+

@@ -145,3 +145,4 @@ After executing any rollback procedure, run the following verification steps:
 - [ ] **Direct Query Verification:** Verify an attendance question returns 75% rule.
 - [ ] **Guardrail Verification:** Verify out-of-domain queries return the refusal string.
 - [ ] **Log Inspection:** Check container logs (`docker logs smartcampus-service`) for any unhandled exceptions.
+

@@ -33,3 +33,4 @@ def test_smoke_http_health_unreachable():
     """Verify HTTP health checker fails gracefully when endpoint is unreachable."""
     with patch("urllib.request.urlopen", side_effect=Exception("Connection refused")):
         assert check_http_health("http://invalid-localhost-url:9999", timeout=1) is False
+
