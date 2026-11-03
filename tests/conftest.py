@@ -20,6 +20,13 @@ os.environ["USE_TF"] = "0"
 os.environ["USE_TORCH"] = "1"
 os.environ.setdefault("KERAS_HOME", os.path.join(tempfile.gettempdir(), ".keras"))
 
+# Ensure NLTK stopwords are downloaded in isolated user environment
+try:
+    import nltk
+    nltk.download("stopwords", quiet=True)
+except Exception:
+    pass
+
 from llama_index.core import Document
 from llama_index.core.embeddings import BaseEmbedding
 from src.llm import MockLocalLLM

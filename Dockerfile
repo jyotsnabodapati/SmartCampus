@@ -32,7 +32,8 @@ WORKDIR /app
 # Step 5: Install Python Dependencies with Layer Caching
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    python -m nltk.downloader stopwords
 
 # Step 6: Copy Application Files
 COPY data/ /app/data/
