@@ -8,7 +8,8 @@
 [![Python 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![Vector DB: ChromaDB](https://img.shields.io/badge/Vector%20DB-ChromaDB-purple.svg)](https://www.trychroma.com/)
 [![LLM: GPT--OSS%2020B](https://img.shields.io/badge/LLM-Groq%20Cloud%20(GPT--OSS%2020B)-orange.svg)](https://groq.com/)
-[![Tests: 35 Passed](https://img.shields.io/badge/Pytest-35%20Passed%20(100%25)-brightgreen.svg)](https://pytest.org/)
+[![Docker: Ready](https://img.shields.io/badge/Docker-Containerized%20(Python%203.11--slim)-blue.svg)](https://www.docker.com/)
+[![Tests: 40 Passed](https://img.shields.io/badge/Pytest-40%20Passed%20(100%25)-brightgreen.svg)](https://pytest.org/)
 
 ---
 
@@ -34,7 +35,7 @@ University policy handbooks typically span dozens to hundreds of pages of comple
 - **Source Document Attribution:** Accompany every valid answer with transparent document citations and similarity confidence scores.
 - **Persistent Local Vector Indexing:** Efficiently store, index, and retrieve dense vector embeddings using persistent ChromaDB.
 - **Interactive UI:** Deliver an intuitive, responsive web chat interface built with Streamlit.
-- **Automated Verification:** Maintain robust continuous integration (CI) and automated tests using Pytest.
+- **Containerization & RAG-Ops:** Fully Dockerized application with Docker Compose, automated multi-stage CI/CD pipelines, health check smoke tests, and zero-downtime rollback procedures.
 
 ---
 
@@ -103,8 +104,9 @@ $$\text{University Documents} \longrightarrow \text{Document Ingestion} \longrig
 | **LLM Inference** | Groq Cloud API | `openai/gpt-oss-20b` | High-throughput, sub-second open-source LLM generation |
 | **Fallback Engine** | MockLocalLLM | Built-in | 100% offline, deterministic fallback when API keys or network are unavailable |
 | **User Interface** | Streamlit | `>=1.30.0` | Interactive web frontend with conversation memory and chunk inspector |
-| **Testing Suite** | Pytest | `>=7.0.0` | 35 automated unit, integration, and benchmark tests |
-| **CI / Automation** | GitHub Actions | `v4 / v5` | Automated build, dependency installation, and test verification on every commit/PR |
+| **Containerization** | Docker & Compose | `3.8+` | Isolated container runtime with health checks and volume persistence |
+| **Testing Suite** | Pytest | `>=7.0.0` | 40 automated unit, integration, benchmark, and smoke tests |
+| **CI / Automation** | GitHub Actions | `v4 / v5` | Multi-stage pipeline: Test Matrix, Docker Build & Verify, CD Webhook |
 
 ---
 
@@ -114,8 +116,10 @@ $$\text{University Documents} \longrightarrow \text{Document Ingestion} \longrig
 SmartCampus/
 │
 ├── .github/
-│   └── workflows/
-│       └── ci.yml                # Continuous Integration workflow (Python matrix 3.10 & 3.11)
+│   ├── workflows/
+│   │   └── ci.yml                # 3-Stage CI/CD pipeline (Test Matrix, Docker Build, CD)
+│   ├── pull_request_template.md  # Standardized PR checklist and review template
+│   └── CODEOWNERS                # Code ownership mappings
 │
 ├── data/                         # University knowledge base documents
 │   ├── Academic_Regulations.txt  # Attendance rules (75%), condonation fees, degree classifications
@@ -137,7 +141,7 @@ SmartCampus/
 │   ├── llm.py                    # Groq Cloud API connector & MockLocalLLM fallback engine
 │   └── rag_engine.py             # Complete RAG orchestrator with resilient fallback handling
 │
-├── tests/                        # Comprehensive Pytest test suite (35 automated tests)
+├── tests/                        # Comprehensive Pytest test suite (40 automated tests)
 │   ├── __init__.py               # Test package initializer
 │   ├── conftest.py               # Shared test fixtures (temp dirs, mock embeddings, documents)
 │   ├── test_ingestion.py         # Unit tests for document loading and metadata
@@ -147,8 +151,13 @@ SmartCampus/
 │   ├── test_retriever.py         # Unit tests for similarity retrieval and query bounds
 │   ├── test_prompts.py           # Unit tests for prompt template construction and instructions
 │   ├── test_llm.py               # Unit tests for LLM generation, Groq mock, and guardrail refusals
+│   ├── test_smoke.py             # Unit tests for health-check and deployment smoke tester
 │   └── test_rag_pipeline.py      # Integration tests for end-to-end RAG query flow and guardrails
 │
+├── Dockerfile                    # Production containerfile (Python 3.11-slim, non-root user)
+├── .dockerignore                 # Excludes .env, chroma_db/, .venv/, caches from build context
+├── docker-compose.yml            # Multi-container orchestration with persistent volume
+├── smoke_test.py                 # Standalone health check and deployment smoke testing script
 ├── app.py                        # Streamlit web application with custom UI & session state
 ├── test_rag.py                   # 15-question benchmark evaluation script (Pytest compatible)
 ├── show_chroma.py                # ChromaDB inspection utility (chunks, embeddings, metadata)
@@ -156,6 +165,8 @@ SmartCampus/
 ├── requirements.txt              # Production and development dependencies
 ├── .env.example                  # Environment variable configuration template
 ├── .gitignore                    # Comprehensive secrets, cache, and DB exclusion rules
+├── ROLLBACK.md                   # Disaster recovery and rollback standard operating procedures
+├── SUBMISSION.md                 # Complete RAG-Ops project assignment submission report
 └── README.md                     # Complete project documentation and developer guide
 ```
 
@@ -166,6 +177,7 @@ SmartCampus/
 ### Prerequisites
 - Python `3.10`, `3.11`, `3.12`, or `3.13`
 - Git installed on your system
+- (Optional) Docker and Docker Compose
 - (Optional) Groq API Key from [console.groq.com/keys](https://console.groq.com/keys)
 
 ### Step 1: Clone the Repository
@@ -211,8 +223,12 @@ Edit `.env` to include your credentials:
 # Groq API Key for fast open-source LLM inference
 GROQ_API_KEY="gsk_your_groq_api_key_here"
 
-# Optional: Path to local ChromaDB directory (defaults to ./chroma_db)
-CHROMA_DB_PATH=./chroma_db
+# Path to local ChromaDB directory (defaults to ./chroma_db)
+CHROMA_DB_PATH="./chroma_db"
+
+# Streamlit Port & Host
+STREAMLIT_SERVER_PORT=8501
+STREAMLIT_SERVER_ADDRESS="0.0.0.0"
 ```
 
 > [!NOTE]  
@@ -226,18 +242,7 @@ CHROMA_DB_PATH=./chroma_db
 ```bash
 streamlit run app.py
 ```
-Open your web browser and navigate to:
-```
-http://localhost:8501
-```
-
-**Features in Streamlit UI:**
-- **Knowledge Base Overview:** Sidebar displays all currently ingested institutional documents.
-- **Preset Quick-Query Chips:** One-click buttons for frequent questions (e.g., Minimum Attendance, Re-evaluation Fee, Placement CGPA).
-- **Source Badges:** Displays exact document names cited in the answer.
-- **Context Inspector:** Expandable viewer displaying the retrieved chunks and exact similarity scores.
-- **Index Rebuild Button:** Live re-indexing of ChromaDB directly from the UI.
-- **Chat History Control:** Button to clear conversational session state.
+Open your browser at `http://localhost:8501`.
 
 ### Option B: Inspect ChromaDB Storage Internals
 To view stored chunks, vector dimensions, and collection metadata without starting the web UI:
@@ -247,11 +252,55 @@ python show_chroma.py
 
 ---
 
-## 🧪 8. Automated Testing & Verification
+## 🐳 8. Docker Containerization & Docker Compose
 
-SmartCampus includes a two-tier testing architecture:
-1. **Pytest Unit & Integration Suite:** 35 automated tests covering all modules in isolation.
+SmartCampus is fully containerized using a hardened `python:3.11-slim` base image with a non-root system user (`appuser`, UID 1001) and native Streamlit health check probing.
+
+### A. Build and Run with Docker CLI
+```bash
+# 1. Build the Docker image
+docker build -t smartcampus:latest .
+
+# 2. Run the container with ChromaDB volume persistence
+docker run -d \
+  --name smartcampus-assistant \
+  -p 8501:8501 \
+  -v chroma_data:/app/chroma_db \
+  -e GROQ_API_KEY="your-groq-api-key" \
+  smartcampus:latest
+
+# 3. Check container logs
+docker logs -f smartcampus-assistant
+
+# 4. Probe container health
+curl -f http://localhost:8501/_stcore/health
+```
+
+### B. Run with Docker Compose (Recommended)
+`docker-compose.yml` mounts university documents as read-only (`:ro`) and persists ChromaDB vectors in a named volume (`chroma_data`):
+
+```bash
+# Start container in detached mode with build
+docker-compose up --build -d
+
+# Check service status and health
+docker-compose ps
+
+# View live container logs
+docker-compose logs -f
+
+# Stop container
+docker-compose down
+```
+
+---
+
+## 🧪 9. Automated Testing, Benchmarking & Smoke Testing
+
+SmartCampus includes a three-tier automated verification system:
+1. **Pytest Unit & Integration Suite:** 40 automated tests covering ingestion, chunking, embeddings, ChromaDB, retrieval, prompts, LLM mocking, and health checks.
 2. **15-Question Benchmark Evaluation Suite:** Evaluates real-world university QA performance across direct, multi-chunk, and out-of-domain queries.
+3. **Deployment Smoke Test:** End-to-end verification script testing documents, RAG synthesis, and Streamlit health endpoints.
 
 ### Run All Pytest Tests
 ```bash
@@ -261,6 +310,15 @@ pytest -v
 ### Run Benchmark Evaluation Script Directly
 ```bash
 python test_rag.py
+```
+
+### Run Deployment Smoke Test Script
+```bash
+# Local testing
+python smoke_test.py
+
+# Live endpoint testing (local or deployed)
+python smoke_test.py --url http://localhost:8501
 ```
 
 ### Test Suite Structure
@@ -274,31 +332,50 @@ python test_rag.py
 | `tests/test_retriever.py` | `src/retriever.py` | Top-k similarity retrieval, score bounds, empty queries |
 | `tests/test_prompts.py` | `src/prompts.py` | Strict anti-hallucination prompt construction |
 | `tests/test_llm.py` | `src/llm.py` | Groq API mocking, fallback answers, guardrail refusals |
+| `tests/test_smoke.py` | `smoke_test.py` | Document presence, RAG synthesis, HTTP health checks |
 | `tests/test_rag_pipeline.py` | `src/rag_engine.py` | End-to-end RAG query, source attribution, guardrails |
 | `test_rag.py` | Complete System | 15 benchmark questions across Categories A, B, and C |
 
 ---
 
-## 🔄 9. Continuous Integration (GitHub Actions)
+## 🔄 10. Continuous Integration & Deployment (GitHub Actions)
 
-Continuous Integration is configured via `.github/workflows/ci.yml`.
+Continuous Integration and Deployment is orchestrated via `.github/workflows/ci.yml`.
 
-### Workflow Triggers
-- **Push:** Automatically triggers on commits pushed to `main`, `develop`, `feature/**`, or `bugfix/**`.
-- **Pull Request:** Automatically triggers on PRs opened against `main` or `develop`.
-
-### Pipeline Stages
-1. **Matrix Environment:** Tests across Python `3.10` and `3.11` on `ubuntu-latest`.
-2. **Dependency Caching:** Utilizes `actions/setup-python` pip cache for fast turnaround.
-3. **Automated Testing:** Executes `pytest -v --tb=short` (35 unit and integration tests).
-4. **Benchmark Verification:** Runs `python test_rag.py` (verifies 100% benchmark accuracy and 100% out-of-domain refusal rate).
-5. **Security Safe:** No API keys or secrets are exposed in CI logs. Tests utilize mock models and offline fallback mode.
+### Pipeline Architecture:
+1. **Stage 1 — Test Matrix:**
+   * Tests across **Python 3.10** and **Python 3.11** on `ubuntu-latest`.
+   * Runs `pytest -v --tb=short` (all 40 tests).
+   * Runs `python test_rag.py` (15-question benchmark verification).
+   * Runs `python smoke_test.py` (pre-build smoke check).
+2. **Stage 2 — Docker Build & Health Verification:**
+   * Uses `docker/setup-buildx-action` and `docker/build-push-action`.
+   * Builds the Docker image inside the runner.
+   * Starts the container and probes `curl -f http://localhost:8501/_stcore/health`.
+   * If `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are configured in GitHub Secrets, pushes:
+     * `<username>/smartcampus:latest`
+     * `<username>/smartcampus:<commit_sha>`
+3. **Stage 3 — Continuous Deployment Trigger:**
+   * Triggers automatically on pushes to `main` when all tests and Docker builds succeed.
+   * Pings `DEPLOY_WEBHOOK_URL` if configured.
 
 ---
 
-## 🌿 10. Git & GitHub Development Workflow
+## 🌐 11. Deployment Options Analysis
 
-SmartCampus follows industry-standard Git workflow practices.
+For hosting the containerized Streamlit application, three production-ready options were evaluated:
+
+| Platform | Type | Pros | Cons | Free Tier |
+| :--- | :--- | :--- | :--- | :---: |
+| **Hugging Face Spaces** | Managed Docker | Native Streamlit support, zero infrastructure management, automatic git push sync | Cold start times on free tier | ✅ Yes |
+| **Render** | Web Service Docker | Deploy hooks support, persistent disk volumes, automatic HTTPS | Free tier spins down after 15 min of inactivity | ✅ Yes |
+| **Railway / Fly.io** | Container PaaS | Sub-second deployments, custom domains, low latency | Limited trial credits | ⚠️ Limited |
+
+**Recommended Option:** **Render** (via Docker Web Service) or **Hugging Face Spaces** (via Docker Space).
+
+---
+
+## 🌿 12. Git & GitHub Development Workflow
 
 ### Recommended Branch Structure
 
@@ -307,75 +384,48 @@ main (production-ready, stable releases)
   │
   └── develop (integration branch for current sprint)
         │
-        ├── feature/add-new-regulations
+        ├── feature/rag-ops-implementation
         ├── feature/enhanced-reranker
         └── bugfix/fix-pdf-table-parsing
 ```
 
-- **`main`**: Production-ready code. Commits should only arrive via merged pull requests after passing CI.
-- **`develop`**: Primary integration branch where completed features are merged and tested.
-- **`feature/<name>`**: Dedicated branches for individual features or improvements.
-- **`bugfix/<name>`**: Dedicated branches for bug fixes.
-
-### Feature Branch Lifecycle
-
-#### 1. Pull Latest Changes
-```bash
-git checkout main
-git pull origin main
-```
-
-#### 2. Create a Feature Branch
-```bash
-git checkout -b feature/enhanced-ui
-```
-
-#### 3. Make Changes and Run Tests Locally
-```bash
-# Verify all tests pass before committing
-pytest -v
-```
-
-#### 4. Stage and Commit Changes
-```bash
-git add .
-git commit -m "feat: improve Streamlit UI layout and add response streaming"
-```
-
-#### 5. Push to GitHub
-```bash
-git push -u origin feature/enhanced-ui
-```
-
-#### 6. Open a Pull Request
-1. Open the repository on GitHub.
-2. Click **Compare & pull request**.
-3. Fill out the PR template describing changes and test results.
-4. Verify that the **SmartCampus CI** workflow passes green.
-5. Review and merge the pull request into `main`.
+* **`main`**: Production-ready code. Merged only via Pull Requests after passing CI.
+* **`develop`**: Primary integration branch.
+* **`feature/<name>`**: Dedicated branches for features.
 
 ---
 
-## 🎓 11. Viva Questions & Theoretical Reference
+## 🏷️ 13. Git Versioning & Release Management
 
-### Q1: Why use Retrieval-Augmented Generation (RAG) rather than fine-tuning an LLM?
-* **Answer:** Fine-tuning alters model weights, is computationally intensive, requires significant GPU hardware, and must be completely re-run every time university regulations change. Furthermore, fine-tuned models still suffer from hallucinations and cannot cite source files with page-level provenance. RAG keeps the LLM frozen, dynamically retrieves authoritative text chunks from a vector database at query time, and injects them directly into the context window with strict anti-hallucination instructions.
+SmartCampus uses semantic versioning (`vMAJOR.MINOR.PATCH`):
 
-### Q2: Why is `all-MiniLM-L6-v2` chosen for the embedding model?
-* **Answer:** `sentence-transformers/all-MiniLM-L6-v2` maps natural language into a dense 384-dimensional vector space. It delivers an optimal trade-off between semantic retrieval quality and computational efficiency, has a small disk footprint (~80 MB), and runs efficiently on standard CPUs without requiring dedicated GPUs.
+* **`v0.1.0`**: Initial Baseline Release (core RAG pipeline, ChromaDB indexing, Streamlit UI).
+* **`v1.0.0`**: Production RAG-Ops Release (40 automated tests, Docker containerization, Docker Compose, GitHub Actions 3-stage CI/CD, health check smoke testing, and rollback recovery SOP).
 
-### Q3: What is chunk overlap and why is it essential?
-* **Answer:** Chunk overlap (e.g., 64 tokens) ensures that critical contextual information spanning sentence or section boundaries is preserved across adjacent chunks. Without overlap, a rule stating conditions across two sentences could be severed, causing the retrieval system to miss the full context.
+### Creating and Viewing Tags
+```bash
+# View all annotated tags
+git tag -l -n
 
-### Q4: How does SmartCampus guarantee zero hallucination on out-of-domain questions?
-* **Answer:** SmartCampus employs a multi-tiered guardrail:
-  1. **Prompt Guardrail:** The system prompt explicitly commands the LLM to answer *strictly and exclusively* based on retrieved context, and return *"I don't have enough information to answer that."* if the context lacks the required facts.
-  2. **Refusal Router:** Queries mentioning topics outside the institutional documents (e.g., cricket, quantum physics, mess menus) trigger a deterministic refusal.
-  3. **Empty Source Attribution:** When a refusal is triggered, source citations and chunk previews are cleared to prevent deceptive or irrelevant citations.
+# Create an annotated release tag
+git tag -a v1.0.0 -m "Release v1.0.0: Complete RAG-Ops pipeline, Docker, and 40 automated tests"
+
+# Push tags to GitHub
+git push origin --tags
+```
 
 ---
 
-## 📜 12. License & Academic Submission Notice
+## 🔄 14. Disaster Recovery & Rollback
 
-Developed as a BTech Final Year Computer Science & Engineering Capstone Project.  
-Built with open-source technologies: **LlamaIndex**, **ChromaDB**, **Hugging Face**, **Groq**, and **Streamlit**.
+See [`ROLLBACK.md`](ROLLBACK.md) for complete disaster recovery standard operating procedures, covering:
+* Identifying last known healthy commit SHA or tag.
+* Git revert vs. hotfix branch procedures.
+* Docker container rollback using commit SHA tags.
+* ChromaDB vector database and document data protection.
+
+---
+
+## 📜 15. Submission Evidence & Deliverables
+
+See [`SUBMISSION.md`](SUBMISSION.md) for the complete RAG-Ops assignment verification report, test outputs, and evidence checklist.

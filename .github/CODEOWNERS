@@ -1,0 +1,9 @@
+# SmartCampus Repository Code Ownership
+# Any pull request modifying code or configurations requires review and approval.
+
+*       @jyotsnabodapati
+/src/   @jyotsnabodapati
+/tests/ @jyotsnabodapati
+/.github/ @jyotsnabodapati
+Dockerfile @jyotsnabodapati
+docker-compose.yml @jyotsnabodapati
