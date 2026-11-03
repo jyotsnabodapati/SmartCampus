@@ -24,6 +24,13 @@ def get_sentence_splitter(chunk_size: int = 512, chunk_overlap: int = 64) -> Sen
     Returns:
         SentenceSplitter: Configured LlamaIndex SentenceSplitter instance.
     """
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be a positive integer.")
+    if chunk_overlap < 0:
+        raise ValueError("chunk_overlap must be non-negative.")
+    if chunk_overlap >= chunk_size:
+        raise ValueError("chunk_overlap must be strictly less than chunk_size.")
+
     return SentenceSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap
@@ -45,6 +52,10 @@ def split_documents_into_chunks(
     Returns:
         List[BaseNode]: List of chunk Nodes containing text and metadata.
     """
+    if not documents:
+        print("ℹ️ No documents provided for chunking.")
+        return []
+
     splitter = get_sentence_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     nodes = splitter.get_nodes_from_documents(documents)
     print(f"🧩 Split {len(documents)} document(s) into {len(nodes)} semantic chunk(s).")

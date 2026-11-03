@@ -1,0 +1,4 @@
+"""
+SmartCampus Automated Test Package
+"""
+

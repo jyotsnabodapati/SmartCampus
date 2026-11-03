@@ -66,6 +66,9 @@ def create_vector_index(
     Returns:
         VectorStoreIndex: Indexed Vector Store ready for retrieval.
     """
+    if not nodes:
+        raise ValueError("Cannot create vector index with an empty nodes list.")
+
     vector_store = get_chroma_vector_store(db_path, collection_name, clear_existing=clear_existing)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
@@ -97,9 +100,8 @@ def load_existing_index(
         Optional[VectorStoreIndex]: Loaded index or None if collection is empty.
     """
     os.makedirs(db_path, exist_ok=True)
-    db_client = chromadb.PersistentClient(path=db_path)
-    
     try:
+        db_client = chromadb.PersistentClient(path=db_path)
         chroma_collection = db_client.get_collection(collection_name)
         if chroma_collection.count() == 0:
             return None
@@ -110,7 +112,8 @@ def load_existing_index(
         )
         print(f"✅ Loaded existing ChromaDB index with {chroma_collection.count()} vectors.")
         return index
-    except Exception:
+    except Exception as e:
+        print(f"ℹ️ Could not load existing ChromaDB index from '{db_path}' ({e}).")
         return None
 
 if __name__ == "__main__":

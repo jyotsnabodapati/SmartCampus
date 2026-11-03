@@ -33,12 +33,16 @@ def load_documents(data_dir: str = "./data") -> List[Document]:
     print(f"📖 Loading {len(files)} document(s) from '{data_dir}'...")
 
     # SimpleDirectoryReader parses PDFs and TXT files automatically
-    reader = SimpleDirectoryReader(
-        input_dir=data_dir,
-        required_exts=[".pdf", ".txt"],
-        filename_as_id=True
-    )
-    documents = reader.load_data()
+    try:
+        reader = SimpleDirectoryReader(
+            input_dir=data_dir,
+            required_exts=[".pdf", ".txt"],
+            filename_as_id=True
+        )
+        documents = reader.load_data()
+    except Exception as e:
+        print(f"⚠️ Error loading documents from '{data_dir}': {e}")
+        return []
 
     print(f"✅ Successfully loaded {len(documents)} document page(s)/section(s).")
     for idx, doc in enumerate(documents, start=1):

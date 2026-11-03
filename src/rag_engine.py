@@ -57,11 +57,12 @@ class SmartCampusRAGEngine:
         Executes end-to-end RAG query pipeline for a user question.
 
         Pipeline Steps:
-        1. Retrieve top-k relevant chunks from ChromaDB.
-        2. Format context string with retrieved content.
-        3. Inject context into strict anti-hallucination prompt template.
-        4. Synthesize answer using open-source LLM.
-        5. Extract source document citations.
+        1. Validate user question.
+        2. Retrieve top-k relevant chunks from ChromaDB.
+        3. Format context string with retrieved content.
+        4. Inject context into strict anti-hallucination prompt template.
+        5. Synthesize answer using configured LLM (with graceful fallback).
+        6. Extract source document citations.
 
         Args:
             user_question (str): User query string.
@@ -75,8 +76,22 @@ class SmartCampusRAGEngine:
                 - retrieved_chunks (List[Dict])
                 - is_refusal (bool)
         """
+        # Step 0: Input validation
+        if not user_question or not user_question.strip():
+            return {
+                "question": user_question or "",
+                "answer": "Please ask a question regarding university academic regulations, exam rules, or placement policies.",
+                "sources": [],
+                "retrieved_chunks": [],
+                "is_refusal": True
+            }
+
         # Step 1: Retrieve top-k chunks
-        retrieved_chunks = retrieve_top_k_chunks(self.index, user_question, top_k=top_k)
+        try:
+            retrieved_chunks = retrieve_top_k_chunks(self.index, user_question.strip(), top_k=top_k)
+        except Exception as e:
+            print(f"⚠️ Retrieval error: {e}")
+            retrieved_chunks = []
 
         if not retrieved_chunks:
             return {
@@ -102,9 +117,16 @@ class SmartCampusRAGEngine:
             query_str=user_question
         )
 
-        # Step 4: Call LLM
-        response = self.llm.complete(formatted_prompt)
-        raw_answer = response.text.strip()
+        # Step 4: Call LLM with graceful fallback on network/API failure
+        try:
+            response = self.llm.complete(formatted_prompt)
+            raw_answer = response.text.strip()
+        except Exception as e:
+            print(f"⚠️ Groq API unavailable ({e}). Switching engine to local fallback LLM...")
+            from src.llm import MockLocalLLM
+            self.llm = MockLocalLLM()
+            fallback_res = self.llm.complete(formatted_prompt)
+            raw_answer = fallback_res.text.strip()
 
         # Step 5: Check refusal guardrail
         refusal_phrase = "I don't have enough information to answer that."

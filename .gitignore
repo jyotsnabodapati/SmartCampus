@@ -1,10 +1,45 @@
+# Environment & Secrets (Never commit credentials)
 .env
+.env.local
+.env.*.local
+!.env.example
+
+# Python Virtual Environments
 .venv/
 venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized files
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+
+# Testing & Coverage
 .pytest_cache/
+.coverage
+htmlcov/
 .mypy_cache/
 .ruff_cache/
-.vscode/
+
+# Local Vector Databases & Storage
 chroma_db/
+*.sqlite3
+
+# IDE & Editor Configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & Temporary Files
+*.log
+tmp/

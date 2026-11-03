@@ -29,8 +29,15 @@ def retrieve_top_k_chunks(
             - score (float): Similarity score (0.0 to 1.0)
             - file_name (str): Source filename
     """
-    retriever = index.as_retriever(similarity_top_k=top_k)
-    retrieved_nodes: List[NodeWithScore] = retriever.retrieve(query)
+    if index is None:
+        raise ValueError("Provided index is None. Cannot perform retrieval.")
+
+    if not query or not query.strip():
+        return []
+
+    effective_top_k = max(1, top_k)
+    retriever = index.as_retriever(similarity_top_k=effective_top_k)
+    retrieved_nodes: List[NodeWithScore] = retriever.retrieve(query.strip())
 
     results = []
     for node_with_score in retrieved_nodes:

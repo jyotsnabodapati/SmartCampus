@@ -37,8 +37,14 @@ class MockLocalLLM(CustomLLM):
     def complete(self, prompt: str, **kwargs) -> CompletionResponse:
         refusal = "I don't have enough information to answer that."
 
+        if not prompt or not prompt.strip():
+            return CompletionResponse(text=refusal)
+
         # Extract user question
         q_part = prompt.split("User Question:")[-1].strip().lower() if "User Question:" in prompt else prompt.strip().lower()
+
+        if not q_part:
+            return CompletionResponse(text=refusal)
 
         # 1. Personal Identity, Greetings, and Casual Chatter
         personal_patterns = ["my name", "who am i", "who are you", "what is your name", "hello", "hi ", "hey ", "tell me a", "what can you do"]

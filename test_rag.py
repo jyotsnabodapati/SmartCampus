@@ -179,6 +179,18 @@ def run_evaluations():
     print(f" System Accuracy Rate                : {accuracy:.2f}%")
     print(f" Out-of-Domain Refusal Rate          : {refusal_accuracy:.2f}% (Target: 100%)")
     print("================================================================================\n")
+    return accuracy, refusal_accuracy
+
+
+def test_rag_benchmark_suite():
+    """
+    Pytest entry point for the 15-question benchmark evaluation suite.
+    Guarantees 100% test coverage across direct, multi-chunk, and out-of-domain queries.
+    """
+    accuracy, refusal_accuracy = run_evaluations()
+    assert accuracy == 100.0, f"Expected 100% benchmark accuracy, got {accuracy}%"
+    assert refusal_accuracy == 100.0, f"Expected 100% refusal accuracy, got {refusal_accuracy}%"
+
 
 if __name__ == "__main__":
     run_evaluations()

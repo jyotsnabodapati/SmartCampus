@@ -1,18 +1,21 @@
 import os
 import sys
+import tempfile
 import warnings
 
-# Suppress non-critical third-party warnings & force fast offline model loading
+# Suppress non-critical third-party warnings & configure safe paths
 warnings.filterwarnings("ignore")
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["HF_HUB_OFFLINE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_NO_TF"] = "1"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["USE_TF"] = "0"
 os.environ["USE_TORCH"] = "1"
+os.environ.setdefault("KERAS_HOME", os.path.join(tempfile.gettempdir(), ".keras"))
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 
 import streamlit as st
@@ -186,7 +189,7 @@ def main():
 
     # Handle User Input
     user_input = st.chat_input("Ask a question about university policies...")
-    query_to_run = preset_query or user_input
+    query_to_run = (preset_query or user_input or "").strip()
 
     if query_to_run:
         # Display User Message
@@ -197,11 +200,17 @@ def main():
         # Generate Assistant Response
         with st.chat_message("assistant"):
             with st.spinner("Searching ChromaDB & Generating Answer..."):
-                response_data = rag_engine.query(query_to_run, top_k=3)
-                answer = response_data["answer"]
-                sources = response_data["sources"]
-                chunks = response_data["retrieved_chunks"]
-                is_refusal = response_data["is_refusal"]
+                try:
+                    response_data = rag_engine.query(query_to_run, top_k=3)
+                    answer = response_data["answer"]
+                    sources = response_data["sources"]
+                    chunks = response_data["retrieved_chunks"]
+                    is_refusal = response_data["is_refusal"]
+                except Exception as e:
+                    answer = f"An unexpected error occurred while processing your request: {e}"
+                    sources = []
+                    chunks = []
+                    is_refusal = True
 
                 # Render Answer
                 if is_refusal:
