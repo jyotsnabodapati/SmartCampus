@@ -1,0 +1,46 @@
+# Environment and Secrets (Never bake into Docker image)
+.env
+.env.*
+!.env.example
+
+# Git repository
+.git
+.gitignore
+.github/
+
+# Byte-code and Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Local Vector Databases
+chroma_db/
+*.sqlite3
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE configurations
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Documentation not needed inside container
+ROLLBACK.md
+SUBMISSION.md
+*.log
+tmp/
+
