@@ -7,9 +7,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+# Ensure NLTK stopwords are downloaded in user directory
+try:
+    import nltk
+    nltk.download("stopwords", quiet=True)
+except Exception:
+    pass
+
 from typing import List, Dict, Any, Optional
 from src.ingestion import load_documents
-
 from src.chunking import split_documents_into_chunks
 from src.embeddings import get_embedding_model
 from src.vector_store import create_vector_index, load_existing_index

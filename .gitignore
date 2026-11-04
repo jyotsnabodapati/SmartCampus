@@ -27,6 +27,8 @@ htmlcov/
 
 # Local Vector Databases & Storage
 chroma_db/
+*chroma*/
+test_fresh_chroma/
 *.sqlite3
 
 # IDE & Editor Configurations
